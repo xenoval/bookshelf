@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Полка — трекер чтения</title>
+  <!-- Тему ставим до загрузки стилей, чтобы страница не мигала светлой при тёмной теме -->
+  <script>
+    try {
+      const theme = JSON.parse(localStorage.getItem("shelf-settings"))?.theme;
+      if (theme && theme !== "system") document.documentElement.dataset.theme = theme;
+    } catch {}
+  </script>
+  <!-- Tinos — бесплатный аналог Times New Roman для систем, где его нет (Android, Linux) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Tinos:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Звёздное небо вверху страницы. Видно только в звёздной теме -->
+  <div class="sky" aria-hidden="true">
+    <div class="sky__stars"></div>
+    <div class="sky__twinkle"></div>
+  </div>
+
+  <div class="page">
+    <header class="header">
+      <h1 class="logo" data-i18n="logo">Полка</h1>
+      <div class="header__side">
+        <p class="summary" id="summary"></p>
+        <button class="icon-button" id="settings-open" data-i18n-aria="settings.open" data-i18n-title="settings.open">
+          <!-- Иконка шестерёнки (Lucide, лицензия ISC) -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/>
+            <circle cx="12" cy="12" r="3"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Поиск по внешнему API -->
+    <section class="search">
+      <label class="visually-hidden" for="search-input" data-i18n="search.label">Найти книгу</label>
+      <input
+        class="search__input"
+        id="search-input"
+        type="search"
+        data-i18n-placeholder="search.placeholder"
+        autocomplete="off"
+      >
+      <p class="search__hint" id="search-hint"></p>
+      <div class="grid grid--results" id="search-results"></div>
+    </section>
+
+    <main>
+      <!-- Главная: рекомендации на основе оценок -->
+      <section class="view" id="view-home">
+        <h2 class="view__title" id="recs-title"></h2>
+        <p class="view__subtitle" id="recs-subtitle"></p>
+        <div class="grid" id="recs"></div>
+      </section>
+
+      <!-- Полка: книги с выбранным статусом -->
+      <section class="view" id="view-shelf" hidden>
+        <h2 class="view__title" id="shelf-title"></h2>
+        <div class="grid" id="shelf"></div>
+        <p class="empty" id="empty" hidden></p>
+      </section>
+    </main>
+  </div>
+
+  <!-- Меню внизу экрана -->
+  <nav class="bottom-nav" id="nav">
+    <div class="bottom-nav__inner">
+      <button class="nav-item is-active" data-view="home">
+        <span data-i18n="nav.home">Подборка</span>
+      </button>
+      <button class="nav-item" data-view="want">
+        <span data-i18n="nav.want">Хочу</span><span class="nav-item__count" data-count="want"></span>
+      </button>
+      <button class="nav-item" data-view="reading">
+        <span data-i18n="nav.reading">Читаю</span><span class="nav-item__count" data-count="reading"></span>
+      </button>
+      <button class="nav-item" data-view="read">
+        <span data-i18n="nav.read">Прочитано</span><span class="nav-item__count" data-count="read"></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Окно настроек -->
+  <!-- tabindex="-1": при открытии фокус получает само окно, а не крестик (см. openDialog в app.js) -->
+  <dialog class="sheet" id="settings-dialog" tabindex="-1">
+    <button class="sheet__close" data-close data-i18n-aria="close">×</button>
+    <div class="sheet__body">
+      <h2 class="sheet__title" data-i18n="settings.title">Настройки</h2>
+
+      <h3 class="section-label" data-i18n="settings.theme">Тема</h3>
+      <div class="options">
+        <button class="option" data-theme-option="system" data-i18n="theme.system">Как в системе</button>
+        <button class="option" data-theme-option="light" data-i18n="theme.light">Светлая</button>
+        <button class="option" data-theme-option="dark" data-i18n="theme.dark">Тёмная</button>
+        <button class="option" data-theme-option="cream" data-i18n="theme.cream">Кремовая</button>
+        <button class="option" data-theme-option="night" data-i18n="theme.night">Звёздная</button>
+      </div>
+
+      <h3 class="section-label" data-i18n="settings.lang">Язык</h3>
+      <div class="options">
+        <button class="option" data-lang-option="ru">Русский</button>
+        <button class="option" data-lang-option="en">English</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Окно книги: статус, заметки, отзыв. Содержимое рисует app.js -->
+  <dialog class="sheet" id="book-dialog" tabindex="-1">
+    <button class="sheet__close" data-close data-i18n-aria="close">×</button>
+    <div class="sheet__body" id="book-detail"></div>
+  </dialog>
+
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="i18n.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

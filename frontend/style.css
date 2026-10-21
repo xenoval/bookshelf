@@ -1,0 +1,857 @@
+/* ---------- Темы: цвета в одном месте ---------- */
+
+/* Светлая (по умолчанию) — чёрно-белая */
+:root {
+  color-scheme: light;
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --text: #111111;
+  --muted: #767676;
+  --line: #e5e5e5;
+  --backdrop: rgb(0 0 0 / 0.35);
+
+  --font: "Times New Roman", "Tinos", Times, serif;
+  --radius: 4px;
+  --nav-height: 64px;
+}
+
+/* Тёмная — для тех, у кого тёмная тема в системе и кто не выбрал другую */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+    --bg: #111111;
+    --surface: #1a1a1a;
+    --text: #f0f0f0;
+    --muted: #8c8c8c;
+    --line: #2c2c2c;
+    --backdrop: rgb(0 0 0 / 0.6);
+  }
+}
+
+/* Тёмная, выбранная в настройках */
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #111111;
+  --surface: #1a1a1a;
+  --text: #f0f0f0;
+  --muted: #8c8c8c;
+  --line: #2c2c2c;
+  --backdrop: rgb(0 0 0 / 0.6);
+}
+
+/* Кремовая — тёплая «бумажная» */
+:root[data-theme="cream"] {
+  color-scheme: light;
+  --bg: #f4eddf;
+  --surface: #faf6ec;
+  --text: #2b2419;
+  --muted: #8a7c66;
+  --line: #e2d7c2;
+  --backdrop: rgb(43 36 25 / 0.35);
+}
+
+/* Звёздная — тёмно-синяя ночь со звёздным небом вверху страницы */
+:root[data-theme="night"] {
+  color-scheme: dark;
+  --bg: #0b0d1a;
+  --surface: #13162a;
+  --text: #eceef8;
+  --muted: #8a8fab;
+  --line: #262a44;
+  --backdrop: rgb(5 6 14 / 0.65);
+}
+
+/* ---------- Базовые стили ---------- */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 17px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Пока открыто окно, страница под ним не прокручивается */
+body:has(dialog[open]) {
+  overflow: hidden;
+}
+
+button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+:focus-visible {
+  outline: 1px solid var(--text);
+  outline-offset: 3px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}
+
+/* ---------- Звёздное небо ---------- */
+.sky {
+  display: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 680px;
+  overflow: hidden;
+  pointer-events: none;
+  /* Небо сверху тёмно-синее и плавно растворяется в фоне страницы */
+  background:
+    radial-gradient(ellipse 60% 50% at 78% 0%, rgb(110 100 210 / 0.18), transparent 70%),
+    linear-gradient(to bottom, #1b2252 0%, #121836 45%, var(--bg) 100%);
+}
+
+:root[data-theme="night"] .sky {
+  display: block;
+}
+
+.sky__stars,
+.sky__twinkle {
+  position: absolute;
+  inset: 0;
+  /* Звёзды гаснут к низу неба, чтобы не было резкой границы */
+  -webkit-mask-image: linear-gradient(to bottom, #000 35%, transparent 100%);
+  mask-image: linear-gradient(to bottom, #000 35%, transparent 100%);
+}
+
+/* Две картинки разного размера накладываются, и узор не повторяется заметно */
+.sky__stars {
+  background-image: url("img/stars-small.svg"), url("img/stars-medium.svg");
+}
+
+.sky__twinkle {
+  background-image: url("img/stars-bright.svg");
+  animation: twinkle 4s ease-in-out infinite alternate;
+}
+
+@keyframes twinkle {
+  from { opacity: 1; }
+  to { opacity: 0.35; }
+}
+
+/* Для тех, у кого в системе отключены анимации */
+@media (prefers-reduced-motion: reduce) {
+  .sky__twinkle {
+    animation: none;
+  }
+}
+
+.page {
+  position: relative; /* чтобы содержимое было поверх неба */
+  max-width: 1040px;
+  margin: 0 auto;
+  /* Снизу оставляем место под фиксированное меню */
+  padding: 56px 24px calc(var(--nav-height) + 64px);
+}
+
+/* ---------- Шапка ---------- */
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 40px;
+}
+
+.logo {
+  margin: 0;
+  font-size: 44px;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+.header__side {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+/* Кнопка-шестерёнка; при наведении слегка поворачивается */
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  color: var(--muted);
+  border-radius: 50%;
+  transition: color 0.2s;
+}
+
+.icon-button svg {
+  width: 22px;
+  height: 22px;
+  transition: transform 0.4s ease;
+}
+
+.icon-button:hover {
+  color: var(--text);
+}
+
+.icon-button:hover svg {
+  transform: rotate(60deg);
+}
+
+.summary {
+  margin: 0;
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* ---------- Поиск ---------- */
+.search {
+  margin-bottom: 48px;
+}
+
+.search__input {
+  width: 100%;
+  padding: 12px 0;
+  font: inherit;
+  font-size: 22px;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.search__input::placeholder {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.search__input:focus {
+  border-bottom-color: var(--text);
+}
+
+.search__hint {
+  min-height: 1.5em;
+  margin: 12px 0 24px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---------- Разделы страницы ---------- */
+.view__title {
+  margin: 0 0 4px;
+  font-size: 26px;
+  font-weight: 400;
+}
+
+.view__subtitle {
+  margin: 0;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.view__title + .grid,
+.view__subtitle + .grid {
+  margin-top: 32px;
+}
+
+/* ---------- Обложка ---------- */
+.cover {
+  display: block;
+  aspect-ratio: 2 / 3;
+  width: 100%;
+  object-fit: cover;
+  background: var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.08);
+}
+
+/* Заглушка, если у книги нет обложки */
+.cover--empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 12px;
+  font-size: 15px;
+  font-style: italic;
+  text-align: center;
+  color: var(--muted);
+  overflow: hidden;
+}
+
+/* ---------- Сетка карточек ---------- */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 40px 28px;
+}
+
+.grid--results:empty {
+  display: none;
+}
+
+.card {
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  animation: fade-in 0.3s ease both;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(6px); }
+}
+
+.card__cover {
+  margin-bottom: 14px;
+  transition: transform 0.2s;
+}
+
+/* Карточки на полке открывают окно книги */
+.card--clickable {
+  cursor: pointer;
+}
+
+.card--clickable:hover .card__cover {
+  transform: translateY(-3px);
+}
+
+/* Серые прямоугольники, пока подборка загружается */
+.card--skeleton .card__cover {
+  box-shadow: none;
+  animation: pulse 1.2s ease-in-out infinite alternate;
+}
+
+.card--skeleton .card__line {
+  height: 12px;
+  margin-bottom: 8px;
+  background: var(--line);
+  border-radius: 2px;
+  animation: pulse 1.2s ease-in-out infinite alternate;
+}
+
+@keyframes pulse {
+  to { opacity: 0.4; }
+}
+
+.card__title {
+  margin: 0 0 2px;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.25;
+  /* Обрезаем длинные названия до двух строк */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card__meta {
+  margin: 0 0 4px;
+  font-size: 15px;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card__info {
+  margin: 4px 0 0;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* Начало отзыва на карточке — не больше трёх строк */
+.card__review {
+  margin: 6px 0 0;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--muted);
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-top: auto;
+  padding-top: 8px;
+}
+
+/* ---------- Элементы управления ---------- */
+.button {
+  padding: 4px 0;
+  font-size: 15px;
+  font-style: italic;
+  text-decoration: underline;
+  text-decoration-color: var(--line);
+  text-underline-offset: 4px;
+  transition: text-decoration-color 0.2s;
+}
+
+.button:hover {
+  text-decoration-color: currentColor;
+}
+
+.button:disabled {
+  color: var(--muted);
+  cursor: default;
+  text-decoration: none;
+}
+
+.link {
+  font-size: 15px;
+  color: var(--muted);
+  transition: color 0.2s;
+}
+
+.link:hover {
+  color: var(--text);
+}
+
+.select {
+  padding: 4px 0;
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+/* Выпадающий список рисует браузер, и по умолчанию у него белый фон.
+   Задаём цвета темы явно, иначе в тёмных темах получается белый текст на белом. */
+.select option {
+  color: var(--text);
+  background-color: var(--surface);
+}
+
+.textarea {
+  display: block;
+  width: 100%;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 16px;
+  color: var(--text);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.textarea::placeholder {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.textarea:focus {
+  border-color: var(--text);
+}
+
+.stars {
+  display: flex;
+  gap: 1px;
+}
+
+.star {
+  font-size: 15px;
+  line-height: 1;
+  color: var(--line);
+  transition: color 0.15s;
+}
+
+.star.is-on {
+  color: var(--text);
+}
+
+/* Подсветка при наведении — только у звёзд, по которым можно кликнуть */
+.stars--interactive .star {
+  font-size: 24px;
+}
+
+.stars--interactive:hover .star {
+  color: var(--text);
+}
+
+.stars--interactive .star:hover ~ .star {
+  color: var(--line);
+}
+
+.empty {
+  padding: 48px 0;
+  text-align: center;
+  font-style: italic;
+  color: var(--muted);
+}
+
+/* ---------- Окна (настройки и книга) ---------- */
+.sheet {
+  width: min(560px, 100% - 32px);
+  max-height: min(88vh, 860px);
+  padding: 0;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 24px 64px rgb(0 0 0 / 0.2);
+}
+
+.sheet:focus {
+  outline: none;
+}
+
+.sheet[open] {
+  animation: sheet-in 0.25s ease;
+}
+
+@keyframes sheet-in {
+  from { opacity: 0; transform: translateY(12px); }
+}
+
+.sheet::backdrop {
+  background: var(--backdrop);
+}
+
+.sheet__body {
+  padding: 32px;
+}
+
+.sheet__close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 36px;
+  height: 36px;
+  font-family: system-ui, sans-serif;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--muted);
+  border-radius: 50%;
+  transition: color 0.2s;
+}
+
+.sheet__close:hover {
+  color: var(--text);
+}
+
+.sheet__title {
+  margin: 0 0 24px;
+  font-size: 26px;
+  font-weight: 400;
+}
+
+.section-label {
+  margin: 24px 0 12px;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Кнопки-переключатели в настройках */
+.options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.option {
+  padding: 7px 16px;
+  font-size: 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  transition: border-color 0.2s, background-color 0.2s, color 0.2s;
+}
+
+.option:hover {
+  border-color: var(--text);
+}
+
+.option.is-active {
+  color: var(--bg);
+  background: var(--text);
+  border-color: var(--text);
+}
+
+/* ---------- Окно книги ---------- */
+.detail__top {
+  display: flex;
+  gap: 20px;
+  padding-right: 24px;
+}
+
+.detail__cover {
+  flex-shrink: 0;
+  width: 96px;
+}
+
+.detail__info {
+  min-width: 0;
+}
+
+.detail__title {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 400;
+  line-height: 1.2;
+}
+
+.detail__meta {
+  margin: 0 0 16px;
+  color: var(--muted);
+}
+
+.detail__section {
+  margin-top: 28px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+}
+
+.detail__section .stars {
+  margin-bottom: 14px;
+}
+
+.detail__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+.detail__hint {
+  margin: 28px 0 0;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.detail__muted {
+  font-size: 14px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.detail__footer {
+  margin-top: 32px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.detail__confirm {
+  margin: 0;
+}
+
+.detail__row--start {
+  justify-content: flex-start;
+  gap: 24px;
+}
+
+.notes {
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.note {
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+}
+
+.note__head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 14px;
+  font-style: italic;
+  color: var(--muted);
+}
+
+.note__text {
+  margin: 4px 0 0;
+  /* Сохраняем переносы строк, которые набрал пользователь */
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* ---------- Нижнее меню ---------- */
+.bottom-nav {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  /* Полупрозрачный фон с размытием того, что прокручивается под меню */
+  background: color-mix(in srgb, var(--bg) 85%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-top: 1px solid var(--line);
+  /* Отступ для iPhone с «чёлкой» и полоской жестов */
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.bottom-nav__inner {
+  display: flex;
+  justify-content: center;
+  gap: 48px;
+  max-width: 1040px;
+  height: var(--nav-height);
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.nav-item {
+  position: relative;
+  font-size: 17px;
+  color: var(--muted);
+  white-space: nowrap;
+  transition: color 0.2s;
+}
+
+.nav-item:hover {
+  color: var(--text);
+}
+
+/* Активный пункт отмечен тонкой линией сверху, на границе меню */
+.nav-item.is-active {
+  color: var(--text);
+}
+
+.nav-item.is-active::before {
+  content: "";
+  position: absolute;
+  top: -1px;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--text);
+}
+
+.nav-item__count {
+  margin-left: 3px;
+  font-size: 13px;
+  color: var(--muted);
+  vertical-align: super;
+}
+
+/* ---------- Всплывающее уведомление ---------- */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: calc(var(--nav-height) + 24px);
+  z-index: 20;
+  max-width: calc(100% - 32px);
+  padding: 10px 18px;
+  font-size: 15px;
+  color: var(--bg);
+  background: var(--text);
+  border-radius: 999px;
+  opacity: 0;
+  transform: translate(-50%, 12px);
+  transition: opacity 0.25s, transform 0.25s;
+  pointer-events: none;
+}
+
+.toast.is-visible {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+/* ---------- Мобильная версия ---------- */
+@media (max-width: 600px) {
+  .page {
+    padding: 32px 16px calc(var(--nav-height) + 48px);
+  }
+
+  .header {
+    margin-bottom: 28px;
+  }
+
+  .header__side {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .summary {
+    font-size: 15px;
+  }
+
+  .logo {
+    font-size: 36px;
+  }
+
+  .sky {
+    height: 500px;
+  }
+
+  .search__input {
+    font-size: 19px;
+  }
+
+  .grid {
+    /* minmax(0, 1fr), а не просто 1fr: иначе длинный текст растягивает колонку */
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 32px 16px;
+  }
+
+  /* Окна выезжают снизу, как на телефоне привычно */
+  .sheet {
+    width: 100%;
+    max-width: 100%;
+    max-height: 90vh;
+    margin: auto 0 0;
+    border-bottom: none;
+    border-radius: 14px 14px 0 0;
+  }
+
+  .sheet__body {
+    padding: 28px 20px calc(28px + env(safe-area-inset-bottom));
+  }
+
+  .detail__cover {
+    width: 80px;
+  }
+
+  .detail__title {
+    font-size: 21px;
+  }
+
+  /* Пункты меню растягиваются на всю ширину экрана */
+  .bottom-nav__inner {
+    justify-content: space-around;
+    gap: 0;
+    padding: 0 8px;
+  }
+
+  .nav-item {
+    font-size: 16px;
+  }
+}

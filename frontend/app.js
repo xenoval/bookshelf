@@ -60,13 +60,33 @@ function escapeHtml(text) {
   return div.innerHTML.replaceAll('"', "&quot;");
 }
 
+// Под каждой обложкой лежит заглушка с названием и автором.
+// Картинка проявляется поверх неё, только когда загрузится, поэтому заглушку видно,
+// если обложки нет, она ещё грузится или сервер обложек недоступен.
 function coverHtml(book, className) {
-  if (book.cover_id) {
-    const src = `https://covers.openlibrary.org/b/id/${book.cover_id}-M.jpg`;
-    return `<img class="cover ${className}" src="${src}" alt="" loading="lazy">`;
-  }
-  return `<div class="cover cover--empty ${className}">${escapeHtml(book.title)}</div>`;
+  const author = book.author ? `<span class="cover__author">${escapeHtml(book.author)}</span>` : "";
+  const placeholder = `
+    <span class="cover__placeholder">
+      <span class="cover__title">${escapeHtml(book.title)}</span>
+      ${author}
+    </span>`;
+
+  // default=false: если обложки нет, сервер вернёт ошибку, а не пустую картинку
+  const image = book.cover_id
+    ? `<img class="cover__img" src="https://covers.openlibrary.org/b/id/${book.cover_id}-M.jpg?default=false" alt="" loading="lazy">`
+    : "";
+
+  return `<div class="cover ${className}">${placeholder}${image}</div>`;
 }
+
+// События load и error не всплывают, поэтому ловим их на этапе погружения (третий аргумент true)
+document.addEventListener("load", (event) => {
+  if (event.target.matches?.(".cover__img")) event.target.classList.add("is-loaded");
+}, true);
+
+document.addEventListener("error", (event) => {
+  if (event.target.matches?.(".cover__img")) event.target.remove();
+}, true);
 
 function metaText(book) {
   return [book.author, book.year].filter(Boolean).join(" · ");

@@ -275,26 +275,77 @@ button {
 
 /* ---------- Обложка ---------- */
 .cover {
+  position: relative;
   display: block;
   aspect-ratio: 2 / 3;
   width: 100%;
-  object-fit: cover;
-  background: var(--line);
+  overflow: hidden;
+  /* Фон чуть отличается от страницы в любой теме */
+  background: color-mix(in srgb, var(--text) 5%, var(--surface));
   border-radius: var(--radius);
   box-shadow: 0 1px 2px rgb(0 0 0 / 0.06), 0 8px 24px rgb(0 0 0 / 0.08);
 }
 
-/* Заглушка, если у книги нет обложки */
-.cover--empty {
+/* Картинка лежит поверх заглушки и проявляется после загрузки */
+.cover__img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.cover__img.is-loaded {
+  opacity: 1;
+}
+
+/* Заглушка в духе классической обложки: рамка, название курсивом, автор под чертой */
+.cover__placeholder {
+  position: absolute;
+  inset: 8px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 12px;
-  font-size: 15px;
-  font-style: italic;
+  gap: 12px;
+  padding: 12px 10px;
   text-align: center;
-  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: 2px;
+}
+
+.cover__title {
+  font-size: 16px;
+  font-style: italic;
+  line-height: 1.25;
+  color: var(--text);
+  overflow-wrap: anywhere;
+  /* Очень длинные названия обрезаем до пяти строк */
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
   overflow: hidden;
+}
+
+.cover__author {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* Короткая черта между названием и автором */
+.cover__author::before {
+  content: "";
+  width: 24px;
+  height: 1px;
+  background: var(--muted);
 }
 
 /* ---------- Сетка карточек ---------- */
@@ -611,6 +662,20 @@ button {
 .detail__cover {
   flex-shrink: 0;
   width: 96px;
+}
+
+/* В маленькой обложке окна книги название рядом и так написано крупно */
+.detail__cover .cover__placeholder {
+  inset: 5px;
+}
+
+.detail__cover .cover__title {
+  font-size: 12px;
+  -webkit-line-clamp: 4;
+}
+
+.detail__cover .cover__author {
+  display: none;
 }
 
 .detail__info {
